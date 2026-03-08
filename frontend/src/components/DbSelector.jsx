@@ -7,7 +7,6 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
-import ListSubheader from '@mui/material/ListSubheader';
 
 export const NEW_DB_VALUE = 'none'; 
 
@@ -19,9 +18,8 @@ function DbSelector({
   onDbChange,
   loading,
   error,
-  allowCreateNew = true,
 }) {
-  const handleDbTypeChange = (event, newDbType) => {
+  const handleDbTypeChange = (_event, newDbType) => {
     if (newDbType !== null) {
       onDbTypeChange(newDbType);
     }
@@ -58,18 +56,22 @@ function DbSelector({
             id="db-select"
             value={selectedDb}
             label="База данных"
-            onChange={handleDbChange}
           >
             {loading ? (
               <MenuItem disabled>
                 <CircularProgress size={20} sx={{ mr: 1 }} /> Загрузка...
               </MenuItem>
             ) : (
-              dbList.map((dbName) => (
-                <MenuItem key={dbName} value={dbName}>
-                  {dbName}
-                </MenuItem>
-              ))
+              [
+                <MenuItem key="" value="">
+                  <em>Нет базы данных</em>
+                </MenuItem>,
+                ...dbList.map((dbName) => (
+                  <MenuItem key={dbName} value={dbName}>
+                    {dbName}
+                  </MenuItem>
+                ))
+              ]
             )}
           </Select>
         </FormControl>
