@@ -7,21 +7,22 @@ import SchemaViewer from '../components/SchemaViewer';
 import QueryInput from '../components/QueryInput';
 import SqlDisplay from '../components/SqlDisplay';
 import ResultsTable from '../components/ResultsTable';
-import Loader from '../components/Loader';
+import TablesDataViewer from '../components/TablesDataViewer';
 import ErrorAlert from '../components/ErrorAlert';
-import { fetchDatabases, fetchSchema, setDbType, setSelectedDb } from '../store/slices/dbSlice';
+import { fetchDatabases, fetchSchema, setDbType, setSelectedDb, clearDbError } from '../store/slices/dbSlice';
 import {
   generateSql,
   executeSql,
   setQuestion,
   setGeneratedSql,
   clearResult,
+  clearQueryError,
 } from '../store/slices/querySlice';
 
 function HomePage() {
   const dispatch = useDispatch();
 
-  const { dbType, dbList, selectedDb, schema, loading: dbLoading, error: dbError } = useSelector(
+  const { dbType, dbList, selectedDb, schema, tablesData, loading: dbLoading, error: dbError } = useSelector(
     (state) => state.db
   );
   const {
@@ -52,11 +53,15 @@ function HomePage() {
     dispatch(setDbType(newType));
     dispatch(setSelectedDb(''));
     dispatch(clearResult());
+    dispatch(clearQueryError()); 
+    dispatch(clearDbError()); 
   };
 
   const handleDbChange = (dbName) => {
     dispatch(setSelectedDb(dbName));
     dispatch(clearResult());
+    dispatch(clearQueryError());
+    dispatch(clearDbError());  
   };
 
   const handleQueryChange = (text) => {
@@ -79,7 +84,7 @@ function HomePage() {
         const upperSql = sql.toUpperCase();
         if (upperSql.includes('CREATE DATABASE') ||
             upperSql.includes('DROP DATABASE')) {
-          dispatch(fetchDatabases(dbType)); // обновляем список БД
+          dispatch(fetchDatabases(dbType)); 
           // Если создали новую БД, сбрасываем выбор, чтобы пользователь выбрал её вручную
           dispatch(setSelectedDb(''));
         }
@@ -89,16 +94,25 @@ function HomePage() {
 
   const handleSqlEdit = (newSql) => {
     dispatch(setGeneratedSql(newSql));
+    dispatch(clearQueryError());
   };
 
-  const canGenerate = Boolean(dbType); // true, если тип СУБД выбран
+  const handleCloseQueryError = () => {
+    dispatch(clearQueryError());
+  };
+
+  const handleCloseDbError = () => {
+    dispatch(clearDbError());
+  };
+
+  const canGenerate = Boolean(dbType); 
 
   return (
     <>
       <AppBar />
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <ErrorAlert message={dbError} onClose={() => {}} />
-        <ErrorAlert message={errorGenerate || errorExecute} onClose={() => {}} />
+        <ErrorAlert message={dbError} onClose={handleCloseDbError} />
+        <ErrorAlert message={errorGenerate || errorExecute} onClose={handleCloseQueryError} />
 
         <DbSelector
           dbType={dbType}
@@ -112,6 +126,8 @@ function HomePage() {
 
         {schema && <SchemaViewer schema={schema} />}
 
+        {tablesData && <TablesDataViewer data={tablesData} />}
+
         <QueryInput
           value={question}
           onChange={handleQueryChange}
@@ -120,17 +136,17 @@ function HomePage() {
           loading={loadingGenerate}
         />
 
-        {generatedSql && (
-          <SqlDisplay
-            sql={generatedSql}
-            onExecute={handleExecuteSql}
-            loading={loadingExecute}
-            error={errorExecute}
-            onChange={handleSqlEdit}
-          />
-        )}
+        
+        <SqlDisplay
+          sql={generatedSql}
+          onExecute={handleExecuteSql}
+          loading={loadingExecute}
+          error={errorExecute}
+          onChange={handleSqlEdit}
+        />
+        
 
-        {loadingExecute && !generatedSql && <Loader />}
+
         {resultData && <ResultsTable data={resultData} />}
       </Container>
     </>
