@@ -7,10 +7,9 @@ export const fetchDatabases = createAsyncThunk(
     try {
       const response = await getDatabases();
       const found = response.data.find(item => item.type === dbType);
-      
       return found ? found.databases : [];
     } catch (err) {
-        return rejectWithValue(err.response?.data?.error || 'Ошибка загрузки списка БД');
+      return rejectWithValue(err.response?.data?.error || 'Ошибка загрузки списка БД');
     }
   }
 );
@@ -20,15 +19,21 @@ export const fetchSchema = createAsyncThunk(
   async ({ dbType, dbName }, { rejectWithValue }) => {
     try {
       const response = await getDbData(dbType, dbName);
+      // response.data = { tableName1: { columns: [...], data: [...] }, ... }
       const schema = {};
-      Object.entries(response.data).forEach(([tableName, { columns }]) => {
+      const tablesData = {};
+
+      Object.entries(response.data).forEach(([tableName, { columns, data }]) => {
         schema[tableName] = columns.map(col => ({
           name: col.column_name || col.COLUMN_NAME || col.Field || col.name,
           type: col.data_type || col.DATA_TYPE || col.Type,
           nullable: col.is_nullable === 'YES' || col.IS_NULLABLE === 'YES' || col.Null === 'YES'
         }));
+
+        tablesData[tableName] = data;
       });
-      return schema;
+
+      return { schema, tablesData };
     } catch (err) {
       return rejectWithValue(err.response?.data?.error || 'Ошибка загрузки схемы');
     }
@@ -42,6 +47,7 @@ const dbSlice = createSlice({
     dbList: [],
     selectedDb: '',
     schema: null,
+    tablesData: null,     
     loading: false,
     error: null,
   },
@@ -51,11 +57,13 @@ const dbSlice = createSlice({
       state.dbList = [];
       state.selectedDb = '';
       state.schema = null;
+      state.tablesData = null;
       state.error = null;
     },
     setSelectedDb: (state, action) => {
       state.selectedDb = action.payload;
-      state.schema = null; 
+      state.schema = null;
+      state.tablesData = null;
     },
     clearDbError: (state) => {
       state.error = null;
@@ -81,11 +89,14 @@ const dbSlice = createSlice({
       })
       .addCase(fetchSchema.fulfilled, (state, action) => {
         state.loading = false;
-        state.schema = action.payload;
+        state.schema = action.payload.schema;
+        state.tablesData = action.payload.tablesData;  
       })
       .addCase(fetchSchema.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        state.schema = null;
+        state.tablesData = null;
       });
   },
 });
