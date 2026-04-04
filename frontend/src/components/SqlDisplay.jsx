@@ -36,7 +36,7 @@ function SqlDisplay({ sql, onExecute, loading, error, onChange }) {
       <SqlTextField
         fullWidth
         multiline
-        rows={5}
+        rows={10}
         value={sql}
         onChange={(e) => onChange(e.target.value)}
         variant="outlined"

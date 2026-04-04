@@ -81,10 +81,23 @@ const querySlice = createSlice({
         const { results } = action.payload;
         if (results && results.length > 0) {
           const first = results[0];
-          if (first.data && first.data.length > 0) {
-            state.resultData = first.data;
-          } else {
+          // Ищем поле, которое является массивом строк
+          let dataArray = null;
+          if (Array.isArray(first.data)) {
+            dataArray = first.data;
+          } else if (Array.isArray(first.rows)) {
+            dataArray = first.rows;
+          } else if (Array.isArray(first.results)) {
+            dataArray = first.results;
+          }
+          
+          if (dataArray && dataArray.length > 0) {
+            state.resultData = dataArray;
+          } else if (dataArray && dataArray.length === 0) {
             state.resultData = { message: 'Запрос выполнен успешно' };
+          } else {
+            // Если данные не массив, пытаемся извлечь сообщение
+            state.resultData = { message: first.message || 'Запрос выполнен, но данные не получены' };
           }
         } else {
           state.resultData = { message: 'Нет результатов' };

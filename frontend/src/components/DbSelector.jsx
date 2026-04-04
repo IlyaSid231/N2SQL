@@ -56,6 +56,11 @@ function DbSelector({
             id="db-select"
             value={selectedDb}
             label="База данных"
+            onChange={handleDbChange}
+            renderValue={(value) => {
+              if (!value) return <em>Нет базы данных</em>;
+              return value; // отображаем как есть
+            }}
           >
             {loading ? (
               <MenuItem disabled>
