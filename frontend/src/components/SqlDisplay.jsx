@@ -5,10 +5,12 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import DownloadIcon from '@mui/icons-material/Download';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
+import { exportToExcel } from '../utils/exportToExcel';  
 
 const SqlTextField = styled(TextField)(({ theme }) => ({
   '& .MuiInputBase-root': {
@@ -18,7 +20,7 @@ const SqlTextField = styled(TextField)(({ theme }) => ({
   },
 }));
 
-function SqlDisplay({ sql, onExecute, loading, error, onChange }) {
+function SqlDisplay({ sql, onExecute, loading, error, onChange, resultData, dbName }) {
   const [copySuccess, setCopySuccess] = useState(false);
 
   const handleCopy = () => {
@@ -27,6 +29,14 @@ function SqlDisplay({ sql, onExecute, loading, error, onChange }) {
       setTimeout(() => setCopySuccess(false), 2000);
     });
   };
+
+  const handleExport = () => {
+    if (resultData && resultData.length > 0) {
+      exportToExcel(resultData, dbName || 'database');
+    }
+  };
+
+  const isExportDisabled = !resultData || resultData.length === 0;
 
   return (
     <Box sx={{ mt: 2, mb: 2 }}>
@@ -48,6 +58,17 @@ function SqlDisplay({ sql, onExecute, loading, error, onChange }) {
           <IconButton onClick={handleCopy} disabled={!sql || loading} color="primary">
             <ContentCopyIcon />
           </IconButton>
+        </Tooltip>
+        <Tooltip title={isExportDisabled ? 'Нет данных для экспорта' : 'Экспорт в Excel'}>
+          <span> 
+            <IconButton
+              onClick={handleExport}
+              disabled={isExportDisabled}
+              color="primary"
+            >
+              <DownloadIcon />
+            </IconButton>
+          </span>
         </Tooltip>
         <Button
           variant="contained"
