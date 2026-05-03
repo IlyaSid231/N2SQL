@@ -6,10 +6,9 @@ export const generateSql = createAsyncThunk(
   async ({ dbType, dbName, question }, { rejectWithValue }) => {
     try {
       const response = await apiGenerateSql({ dbType, dbName, question });
-
       return response.data;
     } catch (err) {
-        return rejectWithValue(err.response?.data?.error || 'Ошибка генерации SQL');
+      return rejectWithValue(err.response?.data?.error || 'Ошибка генерации SQL');
     }
   }
 );
@@ -19,10 +18,9 @@ export const executeSql = createAsyncThunk(
   async ({ dbType, dbName, sql }, { rejectWithValue }) => {
     try {
       const response = await apiExecuteSql({ dbType, dbName, sql });
-
       return response.data;
     } catch (err) {
-        return rejectWithValue(err.response?.data?.error || 'Ошибка выполнения SQL');
+      return rejectWithValue(err.response?.data?.error || 'Ошибка выполнения SQL');
     }
   }
 );
@@ -32,7 +30,7 @@ const querySlice = createSlice({
   initialState: {
     question: '',
     generatedSql: '',
-    resultData: null,        
+    resultData: null,
     loadingGenerate: false,
     loadingExecute: false,
     errorGenerate: null,
@@ -65,7 +63,7 @@ const querySlice = createSlice({
       })
       .addCase(generateSql.fulfilled, (state, action) => {
         state.loadingGenerate = false;
-        state.generatedSql = action.payload; 
+        state.generatedSql = action.payload;
       })
       .addCase(generateSql.rejected, (state, action) => {
         state.loadingGenerate = false;
@@ -79,33 +77,21 @@ const querySlice = createSlice({
       .addCase(executeSql.fulfilled, (state, action) => {
         state.loadingExecute = false;
         const { results } = action.payload;
-        if (results && results.length > 0) {
-          const first = results[0];
-          // Ищем поле, которое является массивом строк
-          let dataArray = null;
-          if (Array.isArray(first.data)) {
-            dataArray = first.data;
-          } else if (Array.isArray(first.rows)) {
-            dataArray = first.rows;
-          } else if (Array.isArray(first.results)) {
-            dataArray = first.results;
-          }
-          
-          if (dataArray && dataArray.length > 0) {
-            state.resultData = dataArray;
-          } else if (dataArray && dataArray.length === 0) {
-            state.resultData = { message: 'Запрос выполнен успешно' };
+        if (results && Array.isArray(results) && results.length > 0) {
+          const firstResult = results[0];
+          if (firstResult.data && Array.isArray(firstResult.data)) {
+            state.resultData = firstResult.data;
           } else {
-            // Если данные не массив, пытаемся извлечь сообщение
-            state.resultData = { message: first.message || 'Запрос выполнен, но данные не получены' };
+            state.resultData = [];
           }
         } else {
-          state.resultData = { message: 'Нет результатов' };
+          state.resultData = [];
         }
       })
       .addCase(executeSql.rejected, (state, action) => {
         state.loadingExecute = false;
         state.errorExecute = action.payload;
+        state.resultData = null;
       });
   },
 });

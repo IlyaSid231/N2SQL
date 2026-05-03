@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getDatabases, getDbData } from '../../services/api';
+import { getDatabases, getDbData, getFullSchema } from '../../services/api';
 
 export const fetchDatabases = createAsyncThunk(
   'db/fetchDatabases',
@@ -19,7 +19,6 @@ export const fetchSchema = createAsyncThunk(
   async ({ dbType, dbName }, { rejectWithValue }) => {
     try {
       const response = await getDbData(dbType, dbName);
-      // response.data = { tableName1: { columns: [...], data: [...] }, ... }
       const schema = {};
       const tablesData = {};
 
@@ -29,13 +28,23 @@ export const fetchSchema = createAsyncThunk(
           type: col.data_type || col.DATA_TYPE || col.Type,
           nullable: col.is_nullable === 'YES' || col.IS_NULLABLE === 'YES' || col.Null === 'YES'
         }));
-
         tablesData[tableName] = data;
       });
-
       return { schema, tablesData };
     } catch (err) {
       return rejectWithValue(err.response?.data?.error || 'Ошибка загрузки схемы');
+    }
+  }
+);
+
+export const fetchFullSchema = createAsyncThunk(
+  'db/fetchFullSchema',
+  async ({ dbType, dbName }, { rejectWithValue }) => {
+    try {
+      const response = await getFullSchema(dbType, dbName);
+      return response.data; 
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.error || 'Ошибка загрузки детальной схемы');
     }
   }
 );
@@ -46,8 +55,9 @@ const dbSlice = createSlice({
     dbType: null,
     dbList: [],
     selectedDb: '',
-    schema: null,
-    tablesData: null,     
+    schema: null,       
+    tablesData: null,
+    fullSchema: null,    
     loading: false,
     error: null,
   },
@@ -58,12 +68,14 @@ const dbSlice = createSlice({
       state.selectedDb = '';
       state.schema = null;
       state.tablesData = null;
+      state.fullSchema = null;
       state.error = null;
     },
     setSelectedDb: (state, action) => {
       state.selectedDb = action.payload;
       state.schema = null;
       state.tablesData = null;
+      state.fullSchema = null; 
     },
     clearDbError: (state) => {
       state.error = null;
@@ -90,13 +102,26 @@ const dbSlice = createSlice({
       .addCase(fetchSchema.fulfilled, (state, action) => {
         state.loading = false;
         state.schema = action.payload.schema;
-        state.tablesData = action.payload.tablesData;  
+        state.tablesData = action.payload.tablesData;
       })
       .addCase(fetchSchema.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.schema = null;
         state.tablesData = null;
+      })
+      .addCase(fetchFullSchema.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchFullSchema.fulfilled, (state, action) => {
+        state.loading = false;
+        state.fullSchema = action.payload;
+      })
+      .addCase(fetchFullSchema.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.fullSchema = null;
       });
   },
 });

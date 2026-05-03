@@ -10,3 +10,5 @@ export const getDbData = (dbType, dbName) => api.get(`/${dbType}/${dbName}`);
 
 export const generateSql = (data) => api.post('/translate', data);
 export const executeSql = (data) => api.post('/query', data);
+
+export const getFullSchema = (dbType, dbName) => api.get(`/schema/${dbType}/${dbName}`);

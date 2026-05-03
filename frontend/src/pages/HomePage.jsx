@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Box } from '@mui/material';
 import Container from '@mui/material/Container';
 import Alert from '@mui/material/Alert';
 import AppBar from '../components/AppBar';
@@ -10,7 +11,14 @@ import SqlDisplay from '../components/SqlDisplay';
 import ResultsTable from '../components/ResultsTable';
 import TablesDataViewer from '../components/TablesDataViewer';
 import ErrorAlert from '../components/ErrorAlert';
-import { fetchDatabases, fetchSchema, setDbType, setSelectedDb, clearDbError } from '../store/slices/dbSlice';
+import { 
+  fetchDatabases,
+  fetchSchema,
+  fetchFullSchema, 
+  setDbType, 
+  setSelectedDb, 
+  clearDbError 
+} from '../store/slices/dbSlice';
 import {
   generateSql,
   executeSql,
@@ -40,7 +48,7 @@ function HomePage() {
   const dispatch = useDispatch();
   const [validationError, setValidationError] = useState('');
 
-  const { dbType, dbList, selectedDb, schema, tablesData, loading: dbLoading, error: dbError } = useSelector(
+  const { dbType, dbList, selectedDb, schema, tablesData, fullSchema, loading: dbLoading, error: dbError } = useSelector(
     (state) => state.db
   );
   const {
@@ -62,6 +70,7 @@ function HomePage() {
   useEffect(() => {
     if (selectedDb) {
       dispatch(fetchSchema({ dbType, dbName: selectedDb }));
+      dispatch(fetchFullSchema({ dbType, dbName: selectedDb }));
     }
   }, [selectedDb, dbType, dispatch]);
 
@@ -116,11 +125,13 @@ function HomePage() {
         }
         if (selectedDb && isDDL(sql)) {
           dispatch(fetchSchema({ dbType, dbName: selectedDb }));
+          dispatch(fetchFullSchema({ dbType, dbName: selectedDb })); 
         }
       })
       .catch(() => {
         if (selectedDb && isDDL(sql)) {
           dispatch(fetchSchema({ dbType, dbName: selectedDb }));
+          dispatch(fetchFullSchema({ dbType, dbName: selectedDb }));
         }
       });
   };
@@ -162,7 +173,11 @@ function HomePage() {
           error={dbError}
         />
 
-        {schema && <SchemaViewer schema={schema} />}
+        <Box sx={{ mt: 2, mb: 4 }}>
+          <SchemaViewer fullSchema={fullSchema} />
+        </Box>
+        
+
         {tablesData && <TablesDataViewer data={tablesData} />}
 
         <QueryInput
@@ -179,6 +194,8 @@ function HomePage() {
           loading={loadingExecute}
           error={errorExecute}
           onChange={handleSqlEdit}
+          resultData={resultData}     
+          dbName={selectedDb}  
         />
 
         {resultData && <ResultsTable data={resultData} />}
