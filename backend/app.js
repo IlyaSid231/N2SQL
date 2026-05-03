@@ -99,6 +99,17 @@ app.post('/query', async (req, res) => {
   }
 });
 
+app.get('/schema/:dbType/:dbName', async (req, res) => {
+  const { dbType, dbName } = req.params;
+  try {
+    const schema = await getSchema(dbType, dbName);
+    res.json(schema);
+  } catch (err) {
+    console.error(`Ошибка получения схемы для ${dbType}/${dbName}:`, err);
+    res.status(400).json({ error: err.message });
+  }
+});
+
 
 app.use((req, res, next) => {
   const error = new Error('Не найдено');
