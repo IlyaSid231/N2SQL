@@ -2,8 +2,8 @@ const pg = require('pg');
 const mysql = require('mysql2/promise');
 const sql = require('mssql');
 const config = require('../config/config');
-const getSystemConnection = require('./dbSystemConnections')
-const getDatabasesFromType = require('./getDatabases')
+const getSystemConnection = require('./dbSystemConnections');
+const getDatabasesFromType = require('./getDatabases');
 
 const { Pool } = pg;
 
@@ -12,8 +12,7 @@ const pools = new Map();
 async function databaseExists(dbType, dbName) {
     try {
         const databasesFromType = await getDatabasesFromType(dbType);
-        
-        return databasesFromType.some(db => db === dbName)
+        return databasesFromType.some(db => db === dbName);
     } catch (error) {
         console.error(`Ошибка проверки существования БД ${dbName}:`, error);
         return false;
@@ -21,14 +20,14 @@ async function databaseExists(dbType, dbName) {
 }
 
 async function getConnection(dbType, dbName) {
-
-     if (dbName === 'none') {
+    if (dbName === 'none') {
         return getSystemConnection(dbType);
     }
 
-    const baseConfig = Object.values(config.databases)
-    .find(d => d.type === dbType)
-    if (!baseConfig) throw new Error(`Не найдена конфигурация для ${dbType}`);
+    const baseConfig = Object.values(config.databases).find(d => d.type === dbType);
+    if (!baseConfig){
+        throw new Error(`Не найдена конфигурация для ${dbType}`);
+    } 
 
     const exists = await databaseExists(dbType, dbName);
     if (!exists) {
@@ -36,14 +35,12 @@ async function getConnection(dbType, dbName) {
     }
 
     const key = `${dbType}-${dbName}`;
-
     if (pools.has(key)) return pools.get(key);
 
     let pool;
-    const dbConfig = {...baseConfig.connection}
+    const dbConfig = { ...baseConfig.connection };
 
-    switch(dbType){
-
+    switch (dbType) {
         case 'postgresql':
             dbConfig.database = dbName;
             pool = new Pool(dbConfig);
@@ -55,14 +52,18 @@ async function getConnection(dbType, dbName) {
             break;
 
         case 'sqlserver':
+            const options = {
+                ...(dbConfig.options || {}), 
+                trustedConnection: false
+            };
             pool = new sql.ConnectionPool({
-                ...dbConfig,
+                server: dbConfig.server,
+                port: dbConfig.port,
+                user: dbConfig.user,
+                password: dbConfig.password,
                 database: dbName,
-                options: {
-                    encrypt: true,
-                    trustedConnection: false, // true, если аутентификация Windows
-                },
-            })
+                options: options
+            });
             await pool.connect();
             break;
 
