@@ -1,4 +1,4 @@
-const dotenv = require ('dotenv');
+const dotenv = require('dotenv');
 dotenv.config();
 
 const config = {
@@ -11,15 +11,22 @@ const config = {
     },
     mysql: {
       type: 'mysql',
-      connection: {host: process.env.MYSQL_HOST, port: +process.env.MYSQL_PORT, user: process.env.MYSQL_USER, password: process.env.MYSQL_PASSWORD }
-      
+      connection: {host: process.env.MYSQL_HOST, port: +process.env.MYSQL_PORT, user: process.env.MYSQL_USER, password: process.env.MYSQL_PASSWORD}
     },
     sqlserver: {
       type: 'sqlserver',
-      connection: {server: process.env.MSSQL_HOST, port: +process.env.MSSQL_PORT, user: process.env.MSSQL_USER, password: process.env.MSSQL_PASSWORD }
+      connection: {
+        server: process.env.SQLSERVER_HOST,
+        port: parseInt(process.env.SQLSERVER_PORT, 10),
+        user: process.env.SQLSERVER_USER,
+        password: process.env.SQLSERVER_PASSWORD,
+        options: {
+          encrypt: true,              
+          trustServerCertificate: true 
+        }
+      }
     }
   }
 };
-
 
 module.exports = config;
