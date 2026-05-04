@@ -2,7 +2,7 @@ const pg = require('pg');
 const mysql = require('mysql2/promise');
 const sql = require('mssql');
 const config = require('../config/config');
-const getSystemConnection = require('./dbSystemConnections')
+const getSystemConnection = require('./systemConnections')
 const getDatabasesFromType = require('./getDatabases')
 
 const { Pool } = pg;
@@ -60,6 +60,7 @@ async function getConnection(dbType, dbName) {
                 database: dbName,
                 options: {
                     encrypt: true,
+                    trustServerCertificate: true,
                     trustedConnection: false, // true, если аутентификация Windows
                 },
             })

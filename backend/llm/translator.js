@@ -4,6 +4,10 @@ const config = require('../config/config.js');
 const openai = new OpenAI({ 
     baseURL: 'https://openrouter.ai/api/v1',
     apiKey: config.openrouterKey, 
+    defaultHeaders: {
+        'HTTP-Referer': 'http://localhost:3000',
+        'X-Title': 'Text2SQL App'
+    }
 });
 
 async function naturalLanguageToSQL(nlQuery, schema, dbType) {
@@ -26,22 +30,24 @@ ${JSON.stringify(schema, null, 2)}
 - Верни ТОЛЬКО чистый SQL-запрос
 - Никаких пояснений, комментариев, markdown, слова "sql"
 - Используй правильный диалект для указанной СУБД
+- НЕ используй название схемы (НЕ пиши "public.", "dbo." и т.д.)
+- Используй ТОЛЬКО имя таблицы, например: "products", НЕ "public.products"
 - Добавляй LIMIT 1000 если это SELECT без ограничения
 - Если схема "none" то запрос напрямую в СУБД
 
 SQL:`;
 
-  const response = await openai.chat.completions.create({
+  response = await openai.chat.completions.create({
     model: "gpt-4o-mini",           // или gpt-4o, grok, claude-3.5-sonnet и т.д.
     messages: [{ role: "user", content: prompt }],
-    temperature: 0.0,
+    temperature: 0.1,
     max_tokens: 800,
   });
 
   let sql = response.choices[0].message.content.trim();
 
   // минимальная очистка (на случай если модель всё-таки добавила что-то)
-  sql = sql.replace(/^```sql\s*/i, '').replace(/```$/,'').trim();
+  // sql = sql.replace(/^```sql\s*/i, '').replace(/```$/,'').trim();
 
   return sql;
 }

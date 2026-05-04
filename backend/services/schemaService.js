@@ -1,7 +1,7 @@
-const getConnection = require('./dbConnections');
-const { getColumns, getForeignKeys, getPrimaryKeys } = require('./sqlQueriesForSchema');
+const getConnection = require('../db/connections');
+const { getColumns, getForeignKeys, getPrimaryKeys } = require('../db/sqlQueriesForSchema');
 
-  async function getSchema(dbType, dbName) {
+async function getSchema(dbType, dbName) {
     const conn = await getConnection(dbType, dbName);
 
     const columns = await getColumns(dbType, conn);
@@ -106,7 +106,7 @@ const { getColumns, getForeignKeys, getPrimaryKeys } = require('./sqlQueriesForS
   }
 
 
-  function determineRelationshipType(fk, sourceTable, targetTable, allForeignKeys) {
+function determineRelationshipType(fk, sourceTable, targetTable, allForeignKeys) {
       // Проверяем, является ли колонка частью первичного ключа
       const isFkPartOfPk = sourceTable.columns.some(col => 
         col.column === fk.column_name && col.is_primary

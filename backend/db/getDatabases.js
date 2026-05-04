@@ -1,4 +1,4 @@
-const getSystemConnection = require('./dbSystemConnections');
+const getSystemConnection = require('./systemConnections');
 
 async function getDatabasesFromType (dbType){
     const systemConn = await getSystemConnection(dbType);

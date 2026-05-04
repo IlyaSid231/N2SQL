@@ -1,6 +1,6 @@
-const getConnection = require('./dbConnections');
+const getConnection = require('./connections');
 
-async function getDbData (dbType, dbName){
+async function getDbData(dbType, dbName){
     const conn = await getConnection(dbType, dbName);
     let tables = [];
     
@@ -12,18 +12,18 @@ async function getDbData (dbType, dbName){
 
         const dbData = {};
         for (const table of tables) {
-        const tableName = table.table_name;
+            const tableName = table.table_name;
 
-        const columnsResult = await conn.query(`SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = '${tableName}'`);
-        const columns = columnsResult.rows;
+            const columnsResult = await conn.query(`SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = '${tableName}'`);
+            const columns = columnsResult.rows;
 
-        const dataResult = await conn.query(`SELECT * FROM ${tableName}`);
-        const data = dataResult.rows;
+            const dataResult = await conn.query(`SELECT * FROM ${tableName}`);
+            const data = dataResult.rows;
 
-        dbData[tableName] = {
-            columns: columns,
-            data: data
-        };
+            dbData[tableName] = {
+                columns: columns,
+                data: data
+            };
         }
         return dbData;
 
