@@ -10,7 +10,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
-import { exportToExcel } from '../utils/exportToExcel';  
+import { exportToCsv, exportToExcel } from '../services/api';  
 
 const SqlTextField = styled(TextField)(({ theme }) => ({
   '& .MuiInputBase-root': {
@@ -20,8 +20,10 @@ const SqlTextField = styled(TextField)(({ theme }) => ({
   },
 }));
 
-function SqlDisplay({ sql, onExecute, loading, error, onChange, resultData, dbName }) {
+function SqlDisplay({ sql, onExecute, loading, error, onChange, resultData, dbName, dbType }) {
   const [copySuccess, setCopySuccess] = useState(false);
+  const [exportingCsv, setExportingCsv] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(sql).then(() => {
@@ -30,13 +32,36 @@ function SqlDisplay({ sql, onExecute, loading, error, onChange, resultData, dbNa
     });
   };
 
-  const handleExport = () => {
-    if (resultData && resultData.length > 0) {
-      exportToExcel(resultData, dbName || 'database');
+  const handleExport = async (format) => {
+    if (!sql) return;
+    const setExporting = format === 'csv' ? setExportingCsv : setExportingExcel;
+    const exportFn = format === 'csv' ? exportToCsv : exportToExcel;
+    const fileExt = format === 'csv' ? 'csv' : 'xlsx';
+    const mimeType = format === 'csv' 
+      ? 'text/csv' 
+      : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+    setExporting(true);
+    try {
+      const response = await exportFn({ dbType, dbName, sql });
+      const blob = new Blob([response.data], { type: mimeType });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `export_${Date.now()}.${fileExt}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export error:', err);
+      alert(`Ошибка экспорта: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setExporting(false);
     }
   };
 
-  const isExportDisabled = !resultData || resultData.length === 0;
+  const isExportDisabled = !sql || !resultData || resultData.length === 0 || loading;
 
   return (
     <Box sx={{ mt: 2, mb: 2 }}>
@@ -59,17 +84,31 @@ function SqlDisplay({ sql, onExecute, loading, error, onChange, resultData, dbNa
             <ContentCopyIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title={isExportDisabled ? 'Нет данных для экспорта' : 'Экспорт в Excel'}>
-          <span> 
+
+        <Tooltip title={isExportDisabled ? (exportingCsv ? 'Экспорт...' : 'Нет данных для экспорта') : 'CSV'}>
+          <span>
             <IconButton
-              onClick={handleExport}
+              onClick={() => handleExport('csv')}
               disabled={isExportDisabled}
               color="primary"
             >
-              <DownloadIcon />
+              {exportingCsv ? <CircularProgress size={20} /> : <DownloadIcon />}
             </IconButton>
           </span>
         </Tooltip>
+
+        <Tooltip title={isExportDisabled ? (exportingExcel ? 'Экспорт...' : 'Нет данных для экспорта') : 'Excel'}>
+          <span>
+            <IconButton
+              onClick={() => handleExport('excel')}
+              disabled={isExportDisabled}
+              color="primary"
+            >
+              {exportingExcel ? <CircularProgress size={20} /> : <DownloadIcon />}
+            </IconButton>
+          </span>
+        </Tooltip>
+
         <Button
           variant="contained"
           color="success"

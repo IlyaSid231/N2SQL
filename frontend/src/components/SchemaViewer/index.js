@@ -32,7 +32,7 @@ function SchemaViewer({ fullSchema }) {
   React.useEffect(() => {
     setNodes(layoutedNodes);
     setEdges(layoutedEdges);
-  }, [layoutedNodes, layoutedEdges]);
+  }, [layoutedNodes, layoutedEdges, setNodes, setEdges]); 
 
   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 

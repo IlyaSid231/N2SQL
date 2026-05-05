@@ -196,6 +196,7 @@ function HomePage() {
           onChange={handleSqlEdit}
           resultData={resultData}     
           dbName={selectedDb}  
+          dbType={dbType}  
         />
 
         {resultData && <ResultsTable data={resultData} />}

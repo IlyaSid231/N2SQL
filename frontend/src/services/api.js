@@ -11,4 +11,16 @@ export const getDbData = (dbType, dbName) => api.get(`/${dbType}/${dbName}`);
 export const generateSql = (data) => api.post('/translate', data);
 export const executeSql = (data) => api.post('/query', data);
 
-export const getFullSchema = (dbType, dbName) => api.get(`/schema/${dbType}/${dbName}`);
+export const getFullSchema = (dbType, dbName) => api.post('/schema', { dbType, dbName });
+
+export const exportToCsv = (data) => {
+  return api.post('/export/csv', data, {
+    responseType: 'blob',
+  });
+};
+
+export const exportToExcel = (data) => {
+  return api.post('/export/excel', data, {
+    responseType: 'blob',
+  });
+};
